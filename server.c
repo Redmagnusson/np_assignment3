@@ -98,19 +98,23 @@ int main(int argc, char *argv[]){
   						#endif
   					} else printf("Socket %d has accepted a connection\n", i);
   				}
+  				else{
+  				printf("Reading\n");
+  				  	readSize = recv(clientfd[3], &client_message, sizeof(client_message), 0);
+  					if(readSize > 0){
+  						printf("Msg: %s", client_message);
+  					}
+  				
+  					}
 				//FD_CLR(i, &ready_reading_sockets);
 			}
 
-  			printf("Hello?\n");
+  			//printf("Hello?\n");
   			//Check for message
-  			if(FD_ISSET(i, &ready_writing_sockets)){
+  			//if(FD_ISSET(i, &ready_writing_sockets)){
 
-  				readSize = recv(serverfd, &client_message, sizeof(client_message), 0);
-  				if(readSize > 0){
-  					printf("Msg: %s", client_message);
-  				}
-  				
-  			}
+
+  			//}
   			
   		}
   		
