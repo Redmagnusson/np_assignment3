@@ -51,14 +51,13 @@ int main(int argc, char *argv[]){
   		exit(-1);
   	}
   	else printf("Socket successfully bound\n");
-
+	
   	//Time for SELECT
-  	int r;
+  	int clientTest;
   	int w;
   	fd_set reading;
   	fd_set writing;
   	fd_set ready_reading_sockets, ready_writing_sockets, current_sockets;
-  	
   	FD_ZERO(&reading);
   	FD_ZERO(&writing);
   	FD_ZERO(&current_sockets);
@@ -70,42 +69,51 @@ int main(int argc, char *argv[]){
 
   		struct timeval timeout;
 		memset(&timeout, 0, sizeof(timeout));
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 1;
+		timeout.tv_sec = 3;
+		timeout.tv_usec = 75000;
   			
   		//Check reads
   		ready_reading_sockets = reading;
-  		if(select(CLIENTS, &ready_reading_sockets, &ready_writing_sockets, NULL, &timeout) < 0){
+  		
+  		if(select(FD_SETSIZE, &ready_reading_sockets, NULL, NULL, &timeout) < 0){
   			//Error
   			printf("Select error: %s\n", strerror(errno));
   		}
   		//printf("r[i] == %d\n", r[i]);
 
-		for(int i = 0;i<CLIENTS;i++){
+		for(int i = 0;i<FD_SETSIZE;i++){
+
 			if(FD_ISSET(i, &ready_reading_sockets)){
+				printf("Are we looping?\n");
 				if(i == serverfd){
   					//Listen
+  					printf("Listening\n");
 					if((listen(serverfd, CLIENTS)) < 0){
 						#ifdef DEBUG
 						printf("Failed to listen: %s\n", strerror(errno));
 						#endif
 					} //else printf("Listening\n");			
-	  				clientfd[i] = accept(serverfd, (struct sockaddr*)&clients[i],(socklen_t*)&len);
-	  				FD_SET(clientfd[i], &ready_reading_sockets);
-  					if(clientfd[i] < 0){
+	  				clientTest = accept(serverfd, (struct sockaddr*)&clients[i], (socklen_t*)&len);
+	  				FD_SET(clientTest, &reading);
+	  				printf("clientfd:%d\n", clientTest);
+  					if(clientTest < 0){
   						#ifdef DEBUG
   						printf("Server accept failed: %s\n", strerror(errno));
   						#endif
   					} else printf("Socket %d has accepted a connection\n", i);
+  					
+
+  				
   				}
   				else{
   				printf("Reading\n");
-  				  	readSize = recv(clientfd[3], &client_message, sizeof(client_message), 0);
+  				  	readSize = recv(serverfd, &client_message, sizeof(client_message), 0);
   					if(readSize > 0){
   						printf("Msg: %s", client_message);
   					}
-  				
-  					}
+				}
+  					
+
 				//FD_CLR(i, &ready_reading_sockets);
 			}
 
