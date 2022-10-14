@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <string.h>
 int CAP = 2000;
 
 bool testString(char* string, bool isNickname){
@@ -47,12 +48,25 @@ bool testString(char* string, bool isNickname){
 #define DEBUG
 int main(int argc, char *argv[]){
   
-    //Get ipv4 and port from arg TODO ADD IPV6 DETECTION PLEASE
+    //Get ipv4 /ipv6 and port from arg
+    char* splits[CAP];
+    char* p = strtok(argv[1], ":");
+    int counter = 0;
+    while(p != NULL){
+    	splits[counter++] = p;
+    	p = strtok(NULL, ":");
+    }
     char delim[]=": ";
-    char *Desthost=strtok(argv[1],delim);
-    char *Destport=strtok(NULL,delim);
+    char *Desthost;//=strtok(argv[1],delim);
+    char *Destport;//=strtok(NULL,delim);
+    Destport = splits[--counter];
+    Desthost = splits[0];
+    for(int i = 1;i<counter;i++){
+    	sprintf(Desthost, "%s:%s",Desthost, splits[i]);
+    }
     char *nickname = argv[2];
     int port=atoi(Destport);
+    printf("Host: %s, Port: %d, Nickname: %s\n", Desthost, port, nickname);
     
     char server_message[CAP], client_message[CAP];
     struct sockaddr_in servAddr;
@@ -88,7 +102,6 @@ int main(int argc, char *argv[]){
 	servAddr.sin_addr.s_addr = inet_addr(Desthost);
 	
 	//Establish Connection, with getaddrinfo :)
-	printf("Host: %s, Port: %d, Nickname: %s\n", Desthost, port, nickname);
 	if(connect(socketDesc, servinfo->ai_addr, servinfo->ai_addrlen) < 0){
 		#ifdef DEBUG
 		printf("Error establishing the connection: %s\n", strerror(errno));
@@ -101,7 +114,7 @@ int main(int argc, char *argv[]){
   		#ifdef DEBUG
   		printf("Error receiving message: %s\n", strerror(errno));
   		#endif
-    } //else printf(server_message);
+    } else printf(server_message);
 	
 	//Send Nickname to Server
 	memset(client_message, 0, CAP);
@@ -156,9 +169,8 @@ int main(int argc, char *argv[]){
 			char* str = (char*)malloc(CAP);
 			str = strdup(client_message);
 			char* command = strtok(client_message, " ");
-			char* text = strtok(NULL, "");
 			if(strcmp(command, "NICK") == 0){
-			
+				char* text = strtok(NULL, "");
 				//Dont forget to check if nickname is valid
 				printf("Nickname: %s\n", text);
 				if(testString(text, true)){
@@ -184,7 +196,7 @@ int main(int argc, char *argv[]){
 					continue;
 					#endif
 				} else printf("Socket closed\n");
-				
+				char* text = strtok(NULL, "");
 				//Get new info
 				Desthost=strtok(text, ":");
    				Destport=strtok(NULL," ");
@@ -250,15 +262,17 @@ int main(int argc, char *argv[]){
 			}		
 			else {
 				//Send regular msg
-				sprintf(str, "%s %s\n", "MSG", client_message);
-				if(strlen(client_message) > 255){
+				
+				char* sendStr = (char*)malloc(CAP);
+				sprintf(sendStr, "%s %s\n", "MSG", str);
+				if(strlen(sendStr) > 255){
 					printf("Your message is too long. Max characters: 255\n");
 				}
 				else{
-					if(send(socketDesc, str, strlen(str), 0) < 0){
-					#ifdef DEBUG
-					printf("Error sending message: %s\n", strerror(errno));
-					#endif
+					if(send(socketDesc, sendStr, strlen(sendStr), 0) < 0){
+						#ifdef DEBUG
+						printf("Error sending message: %s\n", strerror(errno));
+						#endif
 					} //else printf("You sent:%s", str);
 				}
 
@@ -272,17 +286,16 @@ int main(int argc, char *argv[]){
   				#ifdef DEBUG
   				printf("Error receiving message: %s\n", strerror(errno));
   				#endif
-    		} 
-    		else{
-    			//printf(server_message);
+    			} else{
+    				//printf(server_message);
 				char* command = strtok(server_message, " ");
 				char* name = strtok(NULL, " ");
-				char* message = strtok(NULL, "");
+				char* message = strtok(NULL, "\n");
 				if(strcmp(name, nickname) != 0){
-					printf("%s:%s\n", name, message);
+					printf("%s: %s\n", name, message);
 				}
 
-    		}
+    			}
 		}
 	
 	
