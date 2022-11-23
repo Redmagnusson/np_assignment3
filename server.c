@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
 					}
 					else{
 						FD_SET(clientfd, &master);
-						nrOfClients++;
+						//nrOfClients++;
 						if(clientfd > fdmax){
 							fdmax = clientfd;
 						}
@@ -158,12 +158,17 @@ int main(int argc, char *argv[]){
 					if(bytesRecv > 255){
 						//Msg too long
 					}
-					if(bytesRecv < 0){
+					if(bytesRecv == 0){
 						//Terminate client
+						printf("Terminating: %s\n", nicknames[i]);
+						//Idk how to handle the lists but maybe i reorder array?
 						nicknames[i] = "";
 						FD_CLR(i, &master);
 					}
-
+					
+					if(bytesRecv > 0){
+					
+				
 					char* str = (char*)malloc(bytesRecv);
 					str = strdup(client_message);
 					char* command = strtok(client_message, " ");
@@ -191,19 +196,20 @@ int main(int argc, char *argv[]){
 						//Echo to all clients
 						char* text = strtok(NULL, "\n");
 						sprintf(server_message, "%s %s %s\n", command, nicknames[i], text);
-						for(int j = 0;j<=fdmax;j++){
+						for(int j = 0;j<fdmax+1;j++){
+						printf("Size: %d\n", fdmax);
 							if(FD_ISSET(j, &master)){
-								if(j != serverfd){
+								if(j != serverfd){ /*serverfd*/
 								printf("Msg: %s", server_message);
 									if(send(j, server_message, strlen(server_message), 0) < 0){
 										printf("Error sending message: %s\n", strerror(errno));
-									}
+									} else printf("Sent message to: %d\n", j);
 								}
 							}
 						}
 						
 					}
-					
+					}
 					
 				}
 			}

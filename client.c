@@ -14,6 +14,8 @@
 int CAP = 2000;
 
 bool testString(char* string, bool isNickname){
+
+
 	char *expression="^[A-Za-z0-9_]+$";
     regex_t regularexpression;
     int reti;
@@ -26,24 +28,30 @@ bool testString(char* string, bool isNickname){
 	int matches;
     regmatch_t items;
   
-
+ 
 	if(isNickname){
 		if(strlen(string) > 12){
 		    printf("%s is too long (%d vs 12 chars).\n", string, strlen(string));
+		    regfree(&regularexpression);
 			return false;
 		}
 	}
-
+    
     reti=regexec(&regularexpression, string, matches, &items,0);
+    printf("This is bad\n");
     if(!reti){
 		printf("Nickname %s is accepted.\n",string);
+		regfree(&regularexpression);
 		return true;
 
     } else {
 		printf("%s is not accepted.\n",string);
+		regfree(&regularexpression);
 		return false;
     }
+ 
     regfree(&regularexpression);
+    printf("This is bad\n");
 }
 #define DEBUG
 int main(int argc, char *argv[]){
@@ -75,7 +83,12 @@ int main(int argc, char *argv[]){
 	if(!testString(nickname, true)){
 		exit(1);
 	}
-  
+  	//Check if nickname is valid.
+	if(!testString(nickname, true)){
+		exit(1);
+	}
+	
+	
 	//getaddrinfo
 	struct addrinfo hints;
 	struct addrinfo *servinfo = 0;
@@ -141,30 +154,34 @@ int main(int argc, char *argv[]){
 	
 
 	//Start the SELECT for recv and send/input
-	int r, w, rc;
-	fd_set reading, writing, ready_reading_sockets, ready_writing_sockets;
+	int r, w, rc = socketDesc;
+	fd_set reading, writing, ready_reading_sockets, ready_writing_sockets, master;
+	FD_ZERO(&master);
 	FD_ZERO(&reading);
-	FD_ZERO(&writing);
-	FD_SET(socketDesc, &reading);
-	FD_SET(socketDesc, &writing);
+	//FD_ZERO(&writing);
+	FD_SET(0, &master);
+	FD_SET(socketDesc, &master);
+	//FD_SET(socketDesc, &writing);
 	
 	while(true){
 		memset(client_message, 0, CAP);
 		
+		ready_reading_sockets = master;
 		//SELECT Setup
-		ready_writing_sockets = writing;
-		ready_reading_sockets = reading;
+		//ready_writing_sockets = writing;
+		//ready_reading_sockets = reading;
 		struct timeval timeout;
 		memset(&timeout, 0, sizeof(timeout));
-		timeout.tv_sec = 2;
-		timeout.tv_usec = 75000;
-		w = select(2, NULL, &ready_writing_sockets, NULL, &timeout);
-		r = select(2, &ready_reading_sockets, NULL, NULL, &timeout);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+		select(rc + 1, &ready_reading_sockets, NULL, NULL, NULL);
+		//r = select(2, &ready_reading_sockets, NULL, NULL, &timeout);
 		
-		
+		//printf("block check");
 		//Check writes
-		if(w >-1){
-			
+		//if(w > -1){
+		if(FD_ISSET(0, &ready_reading_sockets)){
+			//printf("Entered first IF\n");
 			gets(client_message);
 			char* str = (char*)malloc(CAP);
 			str = strdup(client_message);
@@ -175,6 +192,7 @@ int main(int argc, char *argv[]){
 				printf("Nickname: %s\n", text);
 				if(testString(text, true)){
 					
+					printf("Nick was valid\n");
 					sprintf(str, "%s %s\n", "NICK", text);
 					nickname = strdup(text);
 				}
@@ -182,6 +200,7 @@ int main(int argc, char *argv[]){
 					//printf("Error: Nickname invalid\n");
 					continue;
 				}
+				printf("New Nick: %s\n", str);
 				if(send(socketDesc, str, strlen(str), 0) < 0){
 					#ifdef DEBUG
 					printf("Error sending message: %s\n", strerror(errno));
@@ -258,7 +277,7 @@ int main(int argc, char *argv[]){
 				if(strcmp(server_message, "OK\n") == 0){
 					printf("You're now connected to the chat server\n");
 				}
-				//else exit(1);
+				else exit(1);
 			}		
 			else {
 				//Send regular msg
@@ -280,20 +299,23 @@ int main(int argc, char *argv[]){
 			
 		}
 		//Check reads
-		if(r>-1){
+		//if(r>-1){
+		if(FD_ISSET(rc, &ready_reading_sockets)){
+		//if(1 == 0){
+		//printf("Entered second IF\n");
 			memset(server_message, 0, CAP);
 			if(recv(socketDesc, server_message, sizeof(server_message), 0) < 0){
   				#ifdef DEBUG
   				printf("Error receiving message: %s\n", strerror(errno));
   				#endif
-    			} else{
-    				//printf(server_message);
-				char* command = strtok(server_message, " ");
-				char* name = strtok(NULL, " ");
-				char* message = strtok(NULL, "\n");
-				if(strcmp(name, nickname) != 0){
-					printf("%s: %s\n", name, message);
-				}
+    	} else{
+    			//printf(server_message);
+					char* command = strtok(server_message, " ");
+					char* name = strtok(NULL, " ");
+					char* message = strtok(NULL, "\n");
+					if(strcmp(name, nickname) != 0){
+						printf("%s: %s\n", name, message);
+					}
 
     			}
 		}
