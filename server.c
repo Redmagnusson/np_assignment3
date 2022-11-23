@@ -22,7 +22,7 @@ bool testString(char* string, bool isNickname){
     	fprintf(stderr, "Could not compile regex.\n");
     	exit(1);
     }
-	int matches;
+	int matches = 0;
     regmatch_t items;
   
 
@@ -155,9 +155,7 @@ int main(int argc, char *argv[]){
 					//Read msg
 					memset(client_message, 0, CAP);
 					bytesRecv = recv(i, client_message, CAP, 0);
-					if(bytesRecv > 255){
-						//Msg too long
-					}
+					printf("INCOMING: %s\n", client_message);
 					if(bytesRecv == 0){
 						//Terminate client
 						printf("Terminating: %s\n", nicknames[i]);
@@ -166,21 +164,30 @@ int main(int argc, char *argv[]){
 						FD_CLR(i, &master);
 					}
 					
-					if(bytesRecv > 0){
+					else if(bytesRecv > 0){
 					
-				
 					char* str = (char*)malloc(bytesRecv);
 					str = strdup(client_message);
 					char* command = strtok(client_message, " ");
-
+					 char* text = strtok(NULL, "\n");
 					
+					//Check Msg length
+					if(sizeof(text) > 255){
+						//MSG too long, deny sending it.
+						if(send(i, "ERR\n", strlen("ERR\n"), 0) < 0){
+							printf("Error sending message: %s\n", strerror(errno));
+						}
+					}
 					//Check for NICK
-					if(strcmp(command, "NICK") == 0){
-					    char* text = strtok(NULL, "\n");
+					else if(strcmp(command, "NICK") == 0){
+					   
+					    
+					  //Check if nickname is occupied?
+					  printf("Did we get here? nick\n");
 						//Check if nickname is valid
 						if(testString(text, true)){
 							nicknames[i] = strdup(text);
-							
+							printf("Did we beat the regex?\n");
 							if(send(i, "OK\n", strlen("OK\n"), 0) < 0){
 								printf("Error sending message: %s\n", strerror(errno));
 							}
@@ -192,9 +199,10 @@ int main(int argc, char *argv[]){
 					}
 					
 					//Check for MSG
-					if(strcmp(command, "MSG") == 0){
+					else if(strcmp(command, "MSG") == 0){
+					printf("Did we get here? MSG\n");
 						//Echo to all clients
-						char* text = strtok(NULL, "\n");
+						//char* text = strtok(NULL, "\n");
 						sprintf(server_message, "%s %s %s\n", command, nicknames[i], text);
 						for(int j = 0;j<fdmax+1;j++){
 						printf("Size: %d\n", fdmax);
