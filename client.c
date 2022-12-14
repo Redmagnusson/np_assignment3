@@ -214,12 +214,12 @@ int main(int argc, char *argv[]){
 				char* text = strtok(NULL, "");
 				//Get new info
 				Desthost=strtok(text, ":");
-   				Destport=strtok(NULL," ");
-   				nickname = strtok(NULL, "");
-   				nickname = strdup(nickname);
-   				port=atoi(Destport);
+   			Destport=strtok(NULL," ");
+   			nickname = strtok(NULL, "");
+   			nickname = strdup(nickname);
+   			port=atoi(Destport);
    				
-   				//Getaddrinfo
+   			//Getaddrinfo
 				memset(&hints, 0, sizeof(hints));
 				hints.ai_family = AF_UNSPEC;
 				hints.ai_socktype = SOCK_STREAM;

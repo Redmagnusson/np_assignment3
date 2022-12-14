@@ -9,7 +9,8 @@
 #include <regex.h>
 #include <stdbool.h>
 #include <sys/select.h>
-#include <sys/time.h>
+#include <sys/time.h>'
+
 int CAP = 2000;
 int MAXCLIENTS = 10;
 bool testString(char* string, bool isNickname){
@@ -46,7 +47,7 @@ bool testString(char* string, bool isNickname){
 }
 #define DEBUG
 int main(int argc, char *argv[]){
-  
+
     //Get ipv4 /ipv6 and port from arg
     char* splits[CAP];
     char* p = strtok(argv[1], ":");
@@ -74,7 +75,9 @@ int main(int argc, char *argv[]){
 	struct sockaddr_in client;
 	int len, readSize;
 	
-	
+	for(int i = 0;i<MAXCLIENTS;i++){
+		nicknames[i] = "";
+	}
 	
 	
 	struct addrinfo hints, *serverinfo = 0;
@@ -183,11 +186,17 @@ int main(int argc, char *argv[]){
 					   
 					    
 					  //Check if nickname is occupied?
-					  printf("Did we get here? nick\n");
+					  bool nickExists = false;
+					  for(int i = 0;i<MAXCLIENTS;i++){
+					  	if(strcmp(nicknames[i], text) == 0){
+					  		nickExists = true;
+					  	}
+					  }
+					  
 						//Check if nickname is valid
-						if(testString(text, true)){
+						if(testString(text, true) && nickExists == false){
 							nicknames[i] = strdup(text);
-							printf("Did we beat the regex?\n");
+							//printf("Did we beat the regex?\n");
 							if(send(i, "OK\n", strlen("OK\n"), 0) < 0){
 								printf("Error sending message: %s\n", strerror(errno));
 							}
