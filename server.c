@@ -216,7 +216,7 @@ int main(int argc, char *argv[]){
 						for(int j = 0;j<fdmax+1;j++){
 						printf("Size: %d\n", fdmax);
 							if(FD_ISSET(j, &master)){
-								if(j != serverfd){ /*serverfd*/
+								if(j != serverfd && j != i){ /*serverfd*/
 								printf("Msg: %s", server_message);
 									if(send(j, server_message, strlen(server_message), 0) < 0){
 										printf("Error sending message: %s\n", strerror(errno));

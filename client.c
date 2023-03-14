@@ -320,9 +320,9 @@ int main(int argc, char *argv[]){
 					char* command = strtok(server_message, " ");
 					char* name = strtok(NULL, " ");
 					char* message = strtok(NULL, "\n");
-					if(strcmp(name, nickname) != 0){
+					//if(strcmp(name, nickname) != 0){
 						printf("%s: %s\n", name, message);
-					}
+					//}
 				}
     	}
     			else if(n == 0){
