@@ -209,16 +209,20 @@ int main(int argc, char *argv[]){
 					
 					//Check for MSG
 					else if(strcmp(command, "MSG") == 0){
-					printf("Did we get here? MSG\n");
+					//printf("Did we get here? MSG\n");
 						//Echo to all clients
 						//char* text = strtok(NULL, "\n");
 						sprintf(server_message, "%s %s %s\n", command, nicknames[i], text);
+						//TODO REMOVE THIS ITS FOR TESTING
+						sprintf(server_message, "%s%s", server_message, server_message);
 						for(int j = 0;j<fdmax+1;j++){
-						printf("Size: %d\n", fdmax);
+						//printf("Size: %d\n", fdmax);
 							if(FD_ISSET(j, &master)){
-								if(j != serverfd && j != i){ /*serverfd*/
+								if(j != serverfd /*&& TODO UNCOMMENT THIS BEFORE SUBMISSIONj != i*/){ /*serverfd*/
 								printf("Msg: %s", server_message);
 									if(send(j, server_message, strlen(server_message), 0) < 0){
+										//TODO remove this its just for testing
+										//send(j, server_message, strlen(server_message), 0);
 										printf("Error sending message: %s\n", strerror(errno));
 									} else printf("Sent message to: %d\n", j);
 								}
