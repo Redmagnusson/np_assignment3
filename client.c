@@ -284,7 +284,9 @@ int main(int argc, char *argv[]){
 			else {
 
 				char* sendStr = (char*)malloc(CAP);
+				//TODO FIX THIS ITS FOR TESTING
 				sprintf(sendStr, "%s %s\n", "MSG", str);
+				//sprintf(sendStr, "%s%s", sendStr, sendStr);
 				if(strlen(sendStr) > 255){
 					printf("Your message is too long. Max characters: 255\n");
 				}
